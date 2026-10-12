@@ -3,6 +3,7 @@ from pathlib import Path
 from uuid import uuid4
 import logging
 import shutil
+import time
 from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.responses import JSONResponse
 from mysql.connector import Error as DatabaseError
@@ -11,6 +12,12 @@ from app.modele import cnn
 from app.config import UPLOAD_FOLDER
 from app.bdd.service import Service_Prediction
 from app.bdd.prediction import Prediction
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger("predictions")
+
+SEUIL_CONFIANCE = 0.60
+
 
 @asynccontextmanager
 async def lifespan(app):
@@ -47,8 +54,24 @@ def upload_image(file: UploadFile = File(...)):
                 image.verify()
         except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError) as exc:
             raise HTTPException(status_code=400, detail="Image invalide") from exc
-        label = cnn.predict_image(file_path)
-        prediction = Prediction(image=str(file_path), label=label, commentaire="OK", modele="CNN")
+        debut = time.perf_counter()
+        label, confiance = cnn.predict_image(file_path)
+        duree_ms = (time.perf_counter() - debut) * 1000
+
+        logger.info(
+            "prediction label=%s confiance=%.3f duree_ms=%.1f fichier=%s",
+            label, confiance, duree_ms, file_path.name,
+        )
+        if confiance < SEUIL_CONFIANCE:
+            logger.warning(
+                "confiance faible (%.3f < %.2f) pour label=%s",
+                confiance, SEUIL_CONFIANCE, label,
+            )
+
+        prediction = Prediction(
+            image=str(file_path), label=label, confiance=confiance,
+            commentaire="OK", modele="CNN",
+        )
         Service_Prediction.sauvegarder_prediction(prediction)
         return {"prediction": prediction}
     except Exception:

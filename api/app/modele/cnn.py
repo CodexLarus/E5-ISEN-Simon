@@ -27,4 +27,7 @@ def predict_image(file_path):
         tensor = transform(image.convert("RGB")).unsqueeze(0)
     with torch.inference_mode():
         output = get_model()(tensor)
-    return LABELS[output.argmax(1).item()]
+    probabilites = torch.softmax(output, dim=1)
+    indice = probabilites.argmax(1).item()
+    confiance = probabilites[0, indice].item()
+    return LABELS[indice], confiance
