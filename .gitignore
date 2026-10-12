@@ -1,0 +1,31 @@
+# Secrets / configuration locale
+.env
+
+# Données persistantes MySQL (volume monté par docker-compose)
+databases/
+
+# Images satellites reçues par l'API (volume monté)
+api/satelite_images/
+
+# Environnements Python
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Système
+.DS_Store
+
+# Éditeurs
+.vscode/
+.idea/
+
+# Documents de référentiel Simplon (gardés en local, non versionnés)
+docs/*.pdf
+
+# Rapport (livrable, non versionné)
+docs/*.docx
+
+# Traces de travail
+ressources/rapport/*.txt

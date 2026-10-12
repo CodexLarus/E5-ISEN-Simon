@@ -1,0 +1,63 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: db_cnn
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Renseigner MYSQL_ROOT_PASSWORD dans .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?Renseigner MYSQL_DATABASE dans .env}
+      MYSQL_USER: ${MYSQL_USER:?Renseigner MYSQL_USER dans .env}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Renseigner MYSQL_PASSWORD dans .env}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - ./databases:/var/lib/mysql
+      - ./data/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: always
+
+  adminer:
+    image: adminer
+    container_name: adminer_cnn
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+    restart: always
+
+  web:
+    build: ./api
+    container_name: api_cnn
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      DB_HOST: db
+      DB_PORT: 3306
+      UPLOAD_FOLDER: /code/satelite_images
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "${API_PORT:-8081}:80"
+    volumes:
+      - ./api/app:/code/app
+      - ./api/satelite_images:/code/satelite_images
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+
+  client:
+    build: ./client
+    container_name: client_cnn
+    environment:
+      API_BASE_URL: http://web:80
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "${CLIENT_PORT:-8501}:8501"
+    depends_on:
+      - web
+    restart: always
