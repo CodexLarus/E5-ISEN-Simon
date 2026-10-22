@@ -38,6 +38,8 @@ services:
       DB_HOST: db
       DB_PORT: 3306
       UPLOAD_FOLDER: /code/satelite_images
+      SEUIL_CONFIANCE: ${SEUIL_CONFIANCE:-0.60}
+      SEUIL_DUREE_MS: ${SEUIL_DUREE_MS:-1000}
       PYTHONUNBUFFERED: 1
     ports:
       - "${API_PORT:-8081}:80"
@@ -55,6 +57,7 @@ services:
     container_name: client_cnn
     environment:
       API_BASE_URL: http://web:80
+      SEUIL_CONFIANCE: ${SEUIL_CONFIANCE:-0.60}
       PYTHONUNBUFFERED: 1
     ports:
       - "${CLIENT_PORT:-8501}:8501"

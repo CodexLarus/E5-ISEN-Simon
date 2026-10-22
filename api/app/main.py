@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from uuid import uuid4
 import logging
+import os
 import shutil
 import time
 from fastapi import FastAPI, File, UploadFile, HTTPException, Request
@@ -16,7 +17,8 @@ from app.bdd.prediction import Prediction
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("predictions")
 
-SEUIL_CONFIANCE = 0.60
+SEUIL_CONFIANCE = float(os.getenv("SEUIL_CONFIANCE", "0.60"))
+SEUIL_DUREE_MS = float(os.getenv("SEUIL_DUREE_MS", "1000"))
 
 
 @asynccontextmanager
@@ -64,8 +66,13 @@ def upload_image(file: UploadFile = File(...)):
         )
         if confiance < SEUIL_CONFIANCE:
             logger.warning(
-                "confiance faible (%.3f < %.2f) pour label=%s",
+                "confiance faible (%.3f < %.3f) pour label=%s",
                 confiance, SEUIL_CONFIANCE, label,
+            )
+        if duree_ms > SEUIL_DUREE_MS:
+            logger.warning(
+                "prediction lente (%.1f ms > %.0f ms)",
+                duree_ms, SEUIL_DUREE_MS,
             )
 
         prediction = Prediction(

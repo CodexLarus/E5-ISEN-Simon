@@ -1,4 +1,5 @@
 import json
+import os
 
 import streamlit as st
 import requests
@@ -13,7 +14,7 @@ st.title("🛰️ Application CNN - Classification d'Images Satellites")
 st.sidebar.title("🔍 Navigation")
 menu = st.sidebar.radio("Navigation", ["📤 Upload d'image", "📋 Voir les prédictions", "Dashboard"])
 
-SEUIL_CONFIANCE = 0.60
+SEUIL_CONFIANCE = float(os.getenv("SEUIL_CONFIANCE", "0.60"))
 
 # Télécharger les prédictions indépendamment de la page affichée.
 try:
