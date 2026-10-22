@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS `predictions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `image` varchar(100) NOT NULL,
   `label` int NOT NULL,
+  `confiance` float DEFAULT NULL,
   `commentaire` varchar(100) NOT NULL,
   `modele` varchar(100) NOT NULL,
   PRIMARY KEY (`id`),
